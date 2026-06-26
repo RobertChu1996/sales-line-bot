@@ -27,6 +27,24 @@ def fmt(n: float) -> str:
     return str(int(n)) if n == int(n) else str(n)
 
 
+def add_medical_note(text: str, name: str, amount: float) -> tuple[str | None, str | None]:
+    lines = text.split("\n")
+    result = []
+    found = False
+
+    for line in lines:
+        if re.match(rf"^{re.escape(name)}[：:]", line):
+            found = True
+            result.append(line + f"（體檢件：{fmt(amount)}C）")
+        else:
+            result.append(line)
+
+    if not found:
+        return None, f"找不到「{name}」，請確認名字是否正確"
+
+    return "\n".join(result), None
+
+
 def update_table(text: str, name: str, amount: float) -> tuple[str | None, str | None]:
     lines = text.split("\n")
     result = []
@@ -95,7 +113,22 @@ def on_message(event):
         send(event.reply_token, "✅ 統計表已記錄，Bot 待命中")
         return
 
-    # 2. 有人發「XXX收...數字C」→ 加
+    # 2a. 有人發「XXX收...數字C 體檢件」→ 只加備註，不動數字
+    m = re.match(r"^(.+?)\s*收\s*.+?([\d.]+)\s*[Cc].*體檢件", text)
+    if m:
+        name, amount = m.group(1).strip(), float(m.group(2))
+        if gid not in state:
+            send(event.reply_token, "⚠️ 尚未初始化，請先貼統計表")
+            return
+        new_text, err = add_medical_note(state[gid], name, amount)
+        if err:
+            send(event.reply_token, f"⚠️ {err}")
+            return
+        state[gid] = new_text
+        send(event.reply_token, f"✅ {name} 體檢件 {fmt(amount)}C 已記錄（未計入業績）\n\n{new_text}")
+        return
+
+    # 2b. 有人發「XXX收...數字C」→ 加
     m = re.match(r"^(.+?)\s*收\s*.+?([\d.]+)\s*[Cc]\s*$", text)
     if m:
         name, amount = m.group(1).strip(), float(m.group(2))
