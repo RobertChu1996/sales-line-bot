@@ -146,7 +146,7 @@ def on_message(event):
             send(event.reply_token, f"⚠️ {err}")
             return
         state[gid] = new_text
-        send(event.reply_token, f"✅ {name} 體檢件 {fmt(amount)}C 已記錄（未計入業績）\n\n{new_text}")
+        send(event.reply_token, new_text)
         return
 
     # 2b. 有人發「XXX收...數字C」→ 加
@@ -161,7 +161,7 @@ def on_message(event):
             send(event.reply_token, f"⚠️ {err}")
             return
         state[gid] = new_text
-        send(event.reply_token, f"✅ {name} +{fmt(amount)}C\n\n{new_text}")
+        send(event.reply_token, new_text)
         return
 
     # 3. 有人發「XXX退數字C」→ 扣
@@ -176,7 +176,7 @@ def on_message(event):
             send(event.reply_token, f"⚠️ {err}")
             return
         state[gid] = new_text
-        send(event.reply_token, f"✅ {name} -{fmt(amount)}C\n\n{new_text}")
+        send(event.reply_token, new_text)
         return
 
     # 4. 「XXX體檢取消數字C」→ 刪備註，業績不動
@@ -191,7 +191,7 @@ def on_message(event):
             send(event.reply_token, f"⚠️ {err}")
             return
         state[gid] = new_text
-        send(event.reply_token, f"✅ {name} 體檢件 {fmt(amount)}C 已取消移除\n\n{new_text}")
+        send(event.reply_token, new_text)
         return
 
     # 5. 「XXX體檢通過數字C」→ 刪備註 + 加入業績
@@ -210,7 +210,7 @@ def on_message(event):
             send(event.reply_token, f"⚠️ {err}")
             return
         state[gid] = new_text
-        send(event.reply_token, f"✅ {name} 體檢通過 +{fmt(amount)}C 已計入業績\n\n{new_text}")
+        send(event.reply_token, new_text)
 
 
 def send(reply_token: str, text: str):
