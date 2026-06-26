@@ -45,6 +45,27 @@ def add_medical_note(text: str, name: str, amount: float) -> tuple[str | None, s
     return "\n".join(result), None
 
 
+def remove_medical_note(text: str, name: str, amount: float) -> tuple[str | None, str | None]:
+    lines = text.split("\n")
+    result = []
+    found = False
+
+    for line in lines:
+        if re.match(rf"^{re.escape(name)}[：:]", line):
+            found = True
+            note = f"（體檢件：{fmt(amount)}C）"
+            if note not in line:
+                return None, f"找不到「{name}」的體檢件 {fmt(amount)}C 備註"
+            result.append(line.replace(note, ""))
+        else:
+            result.append(line)
+
+    if not found:
+        return None, f"找不到「{name}」，請確認名字是否正確"
+
+    return "\n".join(result), None
+
+
 def update_table(text: str, name: str, amount: float) -> tuple[str | None, str | None]:
     lines = text.split("\n")
     result = []
@@ -156,6 +177,40 @@ def on_message(event):
             return
         state[gid] = new_text
         send(event.reply_token, f"✅ {name} -{fmt(amount)}C\n\n{new_text}")
+        return
+
+    # 4. 「XXX體檢取消數字C」→ 刪備註，業績不動
+    m = re.match(r"^(.+?)\s*體檢取消\s*([\d.]+)\s*[Cc]\s*$", text)
+    if m:
+        name, amount = m.group(1).strip(), float(m.group(2))
+        if gid not in state:
+            send(event.reply_token, "⚠️ 尚未初始化，請先貼統計表")
+            return
+        new_text, err = remove_medical_note(state[gid], name, amount)
+        if err:
+            send(event.reply_token, f"⚠️ {err}")
+            return
+        state[gid] = new_text
+        send(event.reply_token, f"✅ {name} 體檢件 {fmt(amount)}C 已取消移除\n\n{new_text}")
+        return
+
+    # 5. 「XXX體檢通過數字C」→ 刪備註 + 加入業績
+    m = re.match(r"^(.+?)\s*體檢通過\s*([\d.]+)\s*[Cc]\s*$", text)
+    if m:
+        name, amount = m.group(1).strip(), float(m.group(2))
+        if gid not in state:
+            send(event.reply_token, "⚠️ 尚未初始化，請先貼統計表")
+            return
+        text1, err = remove_medical_note(state[gid], name, amount)
+        if err:
+            send(event.reply_token, f"⚠️ {err}")
+            return
+        new_text, err = update_table(text1, name, amount)
+        if err:
+            send(event.reply_token, f"⚠️ {err}")
+            return
+        state[gid] = new_text
+        send(event.reply_token, f"✅ {name} 體檢通過 +{fmt(amount)}C 已計入業績\n\n{new_text}")
 
 
 def send(reply_token: str, text: str):
