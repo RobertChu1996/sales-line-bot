@@ -96,9 +96,9 @@ def on_message(event):
         return
 
     # 2. 有人發「XXX收...數字C」→ 加
-    m = re.match(r"^(.+?)收.+?([\d.]+)\s*[Cc]\s*$", text)
+    m = re.match(r"^(.+?)\s*收\s*.+?([\d.]+)\s*[Cc]\s*$", text)
     if m:
-        name, amount = m.group(1), float(m.group(2))
+        name, amount = m.group(1).strip(), float(m.group(2))
         if gid not in state:
             send(event.reply_token, "⚠️ 尚未初始化，請先貼統計表")
             return
@@ -111,9 +111,9 @@ def on_message(event):
         return
 
     # 3. 有人發「XXX退數字C」→ 扣
-    m = re.match(r"^(.+?)退([\d.]+)\s*[Cc]\s*$", text)
+    m = re.match(r"^(.+?)\s*退\s*([\d.]+)\s*[Cc]\s*$", text)
     if m:
-        name, amount = m.group(1), float(m.group(2))
+        name, amount = m.group(1).strip(), float(m.group(2))
         if gid not in state:
             send(event.reply_token, "⚠️ 尚未初始化，請先貼統計表")
             return
