@@ -95,23 +95,34 @@ def on_message(event):
         send(event.reply_token, "✅ 統計表已記錄，Bot 待命中")
         return
 
-    # 2. 有人發「XXX收...數字C」→ 更新
+    # 2. 有人發「XXX收...數字C」→ 加
     m = re.match(r"^(.+?)收.+?([\d.]+)\s*[Cc]\s*$", text)
     if m:
-        name = m.group(1)
-        amount = float(m.group(2))
-
+        name, amount = m.group(1), float(m.group(2))
         if gid not in state:
             send(event.reply_token, "⚠️ 尚未初始化，請先貼統計表")
             return
-
         new_text, err = update_table(state[gid], name, amount)
         if err:
             send(event.reply_token, f"⚠️ {err}")
             return
-
         state[gid] = new_text
         send(event.reply_token, f"✅ {name} +{fmt(amount)}C\n\n{new_text}")
+        return
+
+    # 3. 有人發「XXX退數字C」→ 扣
+    m = re.match(r"^(.+?)退([\d.]+)\s*[Cc]\s*$", text)
+    if m:
+        name, amount = m.group(1), float(m.group(2))
+        if gid not in state:
+            send(event.reply_token, "⚠️ 尚未初始化，請先貼統計表")
+            return
+        new_text, err = update_table(state[gid], name, -amount)
+        if err:
+            send(event.reply_token, f"⚠️ {err}")
+            return
+        state[gid] = new_text
+        send(event.reply_token, f"✅ {name} -{fmt(amount)}C\n\n{new_text}")
 
 
 def send(reply_token: str, text: str):
